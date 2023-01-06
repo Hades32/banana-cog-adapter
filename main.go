@@ -29,10 +29,11 @@ func main() {
 		defer resp.Body.Close()
 		if resp.StatusCode > 299 {
 			w.WriteHeader(http.StatusServiceUnavailable)
+			return
 		}
 		w.Header().Add("content-type", "application/json")
-		w.Write([]byte(`{"state": "healthy", "gpu": true}`))
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"state": "healthy", "gpu": true}`))
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
