@@ -41,6 +41,7 @@ func main() {
 		}
 		resp, err := http.DefaultClient.Post(upstream+"/predictions", "application/json", r.Body)
 		if err != nil {
+			fmt.Println("couldn't reach upstream", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -51,12 +52,15 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		_, err = io.Copy(w, resp.Body)
 		if err != nil {
+			fmt.Println("couldn't read upstream", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	})
 	go s.ListenAndServe()
 	cmd := exec.Command(os.Args[1], os.Args[2:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
