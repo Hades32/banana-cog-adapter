@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"os/exec"
 )
 
 func main() {
@@ -50,5 +53,9 @@ func main() {
 			return
 		}
 	})
-	s.ListenAndServe()
+	go s.ListenAndServe()
+	cmd := exec.Command(os.Args[1], os.Args[2:]...)
+	cmd.Run()
+	fmt.Println("command finished - shutting down adapter")
+	s.Shutdown(context.Background())
 }
