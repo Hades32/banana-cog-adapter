@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	upstream := "localhost:5000"
+	upstream := "http://localhost:5000"
 	listenAddr := ":8000"
 	fmt.Println("starting adapter: ", listenAddr, " -> ", upstream)
 	mux := http.NewServeMux()
@@ -21,7 +21,7 @@ func main() {
 		Handler: mux,
 	}
 	mux.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		resp, err := http.DefaultClient.Get(upstream)
+		resp, err := http.DefaultClient.Get(upstream + "/")
 		if err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
