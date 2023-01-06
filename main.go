@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -58,10 +59,18 @@ func main() {
 			return
 		}
 	})
-	go s.ListenAndServe()
-	cmd := exec.Command(os.Args[1], os.Args[2:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	go func() {
+		// we must not start listening before upstream is ready as
+		// the health-check function above seems to get ignored
+		for {
+			_, err := http.DefaultClient.Get(upstream + "/")
+			if err == nil {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		s.ListenAndServe()
+	}()
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -70,6 +79,9 @@ func main() {
 		s.Shutdown(context.Background())
 		os.Exit(0)
 	}()
+	cmd := exec.Command(os.Args[1], os.Args[2:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Run()
 	fmt.Println("command finished - shutting down adapter")
 	s.Shutdown(context.Background())
